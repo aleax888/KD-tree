@@ -294,36 +294,36 @@ struct kd_tree
 		}
 		return false;
 	}
-	void k_nearest_neighbor(kd_node* target, kd_node* current_node,	vector<pair<kd_node*,double>> &k_nearest_neighbors_candidates, int depth = 0)
+	void k_nearest_neighbor(kd_node* target, int k, kd_node* current_node,	vector<pair<kd_node*,double>> &k_nearest_neighbors_candidates, int depth = 0)
 	{
 		if (!current_node)
 			return;
 
 		k_nearest_neighbors_candidates.push_back(pair<kd_node*, double>{current_node, current_node->datum.euclidean_distance(target->datum)});
 		sort(k_nearest_neighbors_candidates.begin(), k_nearest_neighbors_candidates.end(), sortbysec);
-		if (k_nearest_neighbors_candidates.size() > 3) k_nearest_neighbors_candidates.pop_back();
+		if (k_nearest_neighbors_candidates.size() > k) k_nearest_neighbors_candidates.pop_back();
 		
 		int axis = depth % dimension;
 		bool right = false;
 		if (target->datum.coordinates[axis] < current_node->datum.coordinates[axis]) 
 		{
 			right = true;
-			k_nearest_neighbor(target, current_node->child[1], k_nearest_neighbors_candidates, depth + 1);
+			k_nearest_neighbor(target, k, current_node->child[1], k_nearest_neighbors_candidates, depth + 1);
 		}
 		
 		else 
 		{
 			right = false;
-			k_nearest_neighbor(target, current_node->child[0], k_nearest_neighbors_candidates, depth + 1);
+			k_nearest_neighbor(target, k, current_node->child[0], k_nearest_neighbors_candidates, depth + 1);
 		}
 
 		if (compare(k_nearest_neighbors_candidates, fabs(current_node->datum.coordinates[axis] - target->datum.coordinates[axis])))
 		{
 			if (right) {
-				k_nearest_neighbor(target, current_node->child[0], k_nearest_neighbors_candidates, depth + 1);
+				k_nearest_neighbor(target, k, current_node->child[0], k_nearest_neighbors_candidates, depth + 1);
 			}
 			else {
-				k_nearest_neighbor(target, current_node->child[1], k_nearest_neighbors_candidates, depth + 1);
+				k_nearest_neighbor(target, k, current_node->child[1], k_nearest_neighbors_candidates, depth + 1);
 			}
 		}
 	}
@@ -468,7 +468,7 @@ void test_nn()
 	double arr6[2] = { 85, 90 };
 	point p6(2, arr6);
 
-	double arr7[2] = { 10, 60 };
+	double arr7[2] = { 80, 80 };
 	point p7(2, arr7);
 	kd_node *target = new kd_node(p7), *nn = nullptr;
 
@@ -480,10 +480,10 @@ void test_nn()
 	tree.insert(p5);
 	tree.insert(p6);
 
-	tree.in_orden(tree.root);
+	//tree.in_orden(tree.root);
 	tree.nearest_neighbor(target, tree.root, nn);
-	cout << "target:           "; target->datum.printPoint();
-	cout << "nearest neighbor: "; nn->datum.printPoint();
+	cout << "target           -> "; target->datum.printPoint();
+	cout << "nearest neighbor -> "; nn->datum.printPoint();
 }
 void test_knn()
 {
@@ -500,7 +500,7 @@ void test_knn()
 	double arr6[2] = { 85, 90 };
 	point p6(2, arr6);
 
-	double arr7[2] = { 85, 90 };
+	double arr7[2] = { 80, 80 };
 	point p7(2, arr7);
 	kd_node* target = new kd_node(p7);
 	vector<pair<kd_node*, double>> knn;
@@ -513,13 +513,13 @@ void test_knn()
 	tree.insert(p5);
 	tree.insert(p6);
 
-	tree.in_orden(tree.root);
-	tree.k_nearest_neighbor(target, tree.root, knn);
-	cout << "target:             "; target->datum.printPoint();
+	//tree.in_orden(tree.root);
+	tree.k_nearest_neighbor(target, 3, tree.root, knn);
+	cout << "target             -> "; target->datum.printPoint();
 	cout << "k nearest neighbor: " << endl;
 	for (int i = 0; i < knn.size(); ++i)
 	{
-		knn[i].first->datum.printPoint(); cout << "distance: " << knn[i].second << endl;
+		knn[i].first->datum.printPoint(); cout << "-> distance: " << knn[i].second << endl;
 	}
 }
 void test_rq()
@@ -537,7 +537,7 @@ void test_rq()
 	double arr6[2] = { 85, 90 };
 	point p6(2, arr6);
 
-	double arr7[2] = { 75, 85 };
+	double arr7[2] = { 80, 80 };
 	point p7(2, arr7);
 	kd_node* target = new kd_node(p7);
 	vector<pair<kd_node*, double>> rq;
@@ -551,12 +551,12 @@ void test_rq()
 	tree.insert(p6);
 
 	//tree.inorden(tree.root);
-	tree.range_query(target, 60, tree.root, rq);
-	cout << "target:             "; target->datum.printPoint();
-	cout << "k nodes: " << endl;
+	tree.range_query(target, 20, tree.root, rq);
+	cout << "target            -> "; target->datum.printPoint();
+	cout << "nodes into query radius: " << endl;
 	for (int i = 0; i < rq.size(); ++i)
 	{
-		rq[i].first->datum.printPoint(); cout << "distance: " << rq[i].second << endl;
+		rq[i].first->datum.printPoint(); cout << "-> distance: " << rq[i].second << endl;
 	}
 }
 
@@ -687,7 +687,7 @@ void test_nn(int size, int d)
 	}
 }
 
-void test_knn(int size, int d)
+void test_knn(int size, int d, int k)
 {
 	kd_tree tree(d);
 	vector<point> vec;
@@ -707,7 +707,7 @@ void test_knn(int size, int d)
 	kd_node* target = new kd_node(point(d));
 	vector<pair<kd_node*, double>> knn;
 
-	tree.k_nearest_neighbor(target, tree.root, knn);
+	tree.k_nearest_neighbor(target, k, tree.root, knn);
 	cout << "target:             "; target->datum.printPoint();
 	cout << "k nearest neighbor: " << endl;
 	for (int i = 0; i < knn.size(); ++i)
@@ -779,8 +779,8 @@ int main()
 	/*parameters(number od nodes, dimension of nodes)*/
 	//test_nn(10, 2);
 	
-	/*parameters(number od nodes, dimension of nodes)*/
-	//test_knn(10, 2);
+	/*parameters(number od nodes, dimension of nodes, k value)*/
+	test_knn(10, 2, 3);
 	
 	/*parameters(number od nodes, dimension of nodes, true = random query distance or false = predefine query distance)*/
 	//test_rq(10, 3, false);
