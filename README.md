@@ -1,2 +1,3 @@
 # KD-tree
-My implementaion of KD-tree and some algorithms.
+Check wiki :)
+My implementaion of KD-tree and some algorithms to this.
